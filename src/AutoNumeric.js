@@ -1187,6 +1187,7 @@ export default class AutoNumeric {
      */
     _createEventListeners() {
         this.formulaMode = false;
+        this.compositioning = false;
         // Create references to the event handler functions, so we can then cleanly remove those listeners if needed
         // That would not be possible if we used closures directly in the event handler declarations
         this._onFocusInFunc = e => { this._onFocusIn(e); };
@@ -1201,6 +1202,8 @@ export default class AutoNumeric {
         this._onDropFunc = e => { this._onDrop(e); };
         this._onKeydownGlobalFunc = e => { this._onKeydownGlobal(e); };
         this._onKeyupGlobalFunc = e => { this._onKeyupGlobal(e); };
+        this._onCompositionstartFunc = e => { this._onCompositionstart(e); };
+        this._onCompositionendFunc = e => { this._onCompositionend(e); };
 
         // Add the event listeners
         this.domElement.addEventListener('focusin', this._onFocusInFunc, false);
@@ -1215,6 +1218,8 @@ export default class AutoNumeric {
         this.domElement.addEventListener('paste', this._onPasteFunc, false);
         this.domElement.addEventListener('wheel', this._onWheelFunc, false);
         this.domElement.addEventListener('drop', this._onDropFunc, false);
+        this.domElement.addEventListener('compositionstart', this._onCompositionstartFunc, false);
+        this.domElement.addEventListener('compositionend', this._onCompositionendFunc, false);
         this._setupFormListener();
 
         // Keep track if the event listeners have been initialized on this object
@@ -1244,6 +1249,8 @@ export default class AutoNumeric {
         this.domElement.removeEventListener('paste', this._onPasteFunc, false);
         this.domElement.removeEventListener('wheel', this._onWheelFunc, false);
         this.domElement.removeEventListener('drop', this._onDropFunc, false);
+        this.domElement.removeEventListener('compositionstart', this._onCompositionstartFunc, false);
+        this.domElement.removeEventListener('compositionend', this._onCompositionendFunc, false);
         this._removeFormListener();
 
         // Keep track if the event listeners have been initialized on this object
@@ -6542,6 +6549,9 @@ To solve that, you'd need to either set \`decimalPlacesRawValue\` to \`null\`, o
      * @param {KeyboardEvent} e
      */
     _onKeydown(e) {
+        if (this.compositioning) {
+            return;
+        }
         this.formatted = false; // Keep track if the element has been formatted already. If that's the case, prevent further format calculations.
         this.isEditing = true; // Keep track if the user is currently editing the element manually
 
@@ -6677,6 +6687,9 @@ To solve that, you'd need to either set \`decimalPlacesRawValue\` to \`null\`, o
      * @param {KeyboardEvent} e
      */
     _onKeypress(e) {
+        if (this.compositioning) {
+            return;
+        }
         if (this.formulaMode) {
             // Accept the backspace, delete, arrow, home and end keys
             if (this._acceptNonPrintableKeysInFormulaMode()) {
@@ -6747,6 +6760,9 @@ To solve that, you'd need to either set \`decimalPlacesRawValue\` to \`null\`, o
      * @param {KeyboardEvent} e
      */
     _onKeyup(e) {
+        if (this.compositioning) {
+            return;
+        }
         this.isEditing = false;
         this.keydownEventCounter = 0; // Reset the keydown events counter
 
@@ -7736,6 +7752,42 @@ To solve that, you'd need to either set \`decimalPlacesRawValue\` to \`null\`, o
                 this.constructor._reformatAltHovered(anElement);
             }
         }
+    }
+
+    /**
+     * Handler for 'compositionstart' events. 
+     * 
+     * When using IME (Input Method Editor) to input characters, the browser will fire a 'compositionstart' event when the user starts typing in the IME,
+     * and a 'compositionend' event when the user has finished typing and the characters are committed.
+     * During the composition, the value is not yet formatted, and the user can still change the input.
+     *
+     * @param {CompositionEvent} e
+     * @private
+     */
+    _onCompositionstart(e) { // eslint-disable-line no-unused-vars
+        // prepare internal state for trigger format on compositionend
+        const eventInitDict = { key: AutoNumericEnum.keyName.Space, which: AutoNumericEnum.keyCode.Space, keyCode: AutoNumericEnum.keyCode.Space };
+        const keydownEvent = new KeyboardEvent('keydown', eventInitDict);
+        e.target.dispatchEvent(keydownEvent);
+
+        this.compositioning = true;
+    }
+
+    /**
+     * Handler for 'compositionend' events.
+     * 
+     * @param {CompositionEvent} e
+     * @private
+     */
+    _onCompositionend(e) {
+        this.compositioning = false;
+
+        // Trigger format
+        const eventInitDict = { key: AutoNumericEnum.keyName.Space, which: AutoNumericEnum.keyCode.Space, keyCode: AutoNumericEnum.keyCode.Space };
+        const keypressEvent = new KeyboardEvent('keypress', eventInitDict);
+        e.target.dispatchEvent(keypressEvent);
+        const keyupEvent = new KeyboardEvent('keyup', eventInitDict);
+        e.target.dispatchEvent(keyupEvent);
     }
 
     /**

@@ -19,6 +19,7 @@ module.exports = {
         console       : true,
         CustomEvent   : true,
         WheelEvent    : true,
+        KeyboardEvent : true,
         __dirname     : true,
     },
     extends      : 'eslint:recommended',
