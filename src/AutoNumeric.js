@@ -7766,7 +7766,7 @@ To solve that, you'd need to either set \`decimalPlacesRawValue\` to \`null\`, o
      */
     _onCompositionstart(e) { // eslint-disable-line no-unused-vars
         // prepare internal state for trigger format on compositionend
-        const eventInitDict = { key: AutoNumericEnum.keyName.Space, which: AutoNumericEnum.keyCode.Space, keyCode: AutoNumericEnum.keyCode.Space };
+        const eventInitDict = { key: AutoNumericEnum.keyName.Space, which: '32', keyCode: '32' };
         const keydownEvent = new KeyboardEvent('keydown', eventInitDict);
         e.target.dispatchEvent(keydownEvent);
 
@@ -7783,7 +7783,7 @@ To solve that, you'd need to either set \`decimalPlacesRawValue\` to \`null\`, o
         this.compositioning = false;
 
         // Trigger format
-        const eventInitDict = { key: AutoNumericEnum.keyName.Space, which: AutoNumericEnum.keyCode.Space, keyCode: AutoNumericEnum.keyCode.Space };
+        const eventInitDict = { key: AutoNumericEnum.keyName.Space, which: '32', keyCode: '32' };
         const keypressEvent = new KeyboardEvent('keypress', eventInitDict);
         e.target.dispatchEvent(keypressEvent);
         const keyupEvent = new KeyboardEvent('keyup', eventInitDict);
